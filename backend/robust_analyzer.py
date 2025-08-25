@@ -762,8 +762,7 @@ Respond with STRICT JSON only."""},
                 "conflicts": conflicts,
                 "behavioral_insights": insights,
                 "recommendations": recommendations,
-                # Completing the missing parts of robust_analyzer.py
-
+                "goal_summary": {
                     "goal": desired_behavior or "increase conversions",
                     "primary_found": sum(1 for c in final_ctas if c["goal_role"] == "primary"),
                     "supporting_found": sum(1 for c in final_ctas if c["goal_role"] == "supporting"),

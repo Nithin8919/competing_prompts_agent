@@ -1,0 +1,1033 @@
+<!-- templates/color_results.html -->
+{% extends "base.html" %}
+
+{% block title %}Analysis Results - CTA Focus Analyzer{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Header -->
+    <div class="results-header mb-5">
+        <div class="header-content">
+            <div class="header-main">
+                <h2 class="results-title">
+                    <i class="fas fa-chart-line me-3"></i>
+                    Analysis Complete
+                </h2>
+                <div class="results-meta">
+                    <span class="meta-item">
+                        <i class="fas fa-bullseye me-1"></i>
+                        {{ data.total_ctas }} CTAs Found
+                    </span>
+                    <span class="meta-divider">•</span>
+                    <span class="meta-item">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        {{ data.total_conflicts }} Conflicts
+                    </span>
+                    <span class="meta-divider">•</span>
+                    <span class="meta-item">
+                        <i class="fas fa-clock me-1"></i>
+                        {{ data.processing_time }}s
+                    </span>
+                    {% if data.source_url %}
+                    <span class="meta-divider">•</span>
+                    <span class="meta-item">
+                        <i class="fas fa-link me-1"></i>
+                        URL Analysis
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <a href="/" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>
+                    New Analysis
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goal Summary -->
+    <div class="goal-card mb-5">
+        <div class="goal-header">
+            <h5><i class="fas fa-target me-2"></i>Your Goal</h5>
+        </div>
+        <div class="goal-content">
+            <p>{{ data.desired_behavior }}</p>
+            {% if data.source_url %}
+            <div class="source-info mt-2">
+                <small><i class="fas fa-globe me-1"></i>Analyzed: <a href="{{ data.source_url }}" target="_blank">{{ data.source_url }}</a></small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Competing Prompts Found -->
+    {% if data.conflicts %}
+    <div class="competing-section mb-5">
+        <div class="competing-header">
+            <div class="competing-icon">⚠️</div>
+            <div>
+                <h2>Competing Prompts Found</h2>
+                <p>Elements that may confuse users and hurt your conversion rates</p>
+            </div>
+        </div>
+
+        <!-- HIGH Priority -->
+        {% if data.high_priority_conflicts %}
+        <div class="priority-section mb-4">
+            <div class="priority-header priority-high">
+                <div class="priority-indicator">
+                    <div class="priority-dot high-dot"></div>
+                    <h3>HIGH Priority</h3>
+                </div>
+                <div class="priority-count">{{ data.high_priority_conflicts|length }} Issues</div>
+            </div>
+            
+            {% for conflict in data.high_priority_conflicts %}
+            <div class="conflict-card high-priority">
+                <div class="conflict-main">
+                    <div class="conflict-element">
+                        <div class="element-type">{{ conflict.element_type }}</div>
+                        <div class="element-text">"{{ conflict.element_text }}"</div>
+                    </div>
+                    
+                    <div class="conflict-details">
+                        <div><strong>Context:</strong> {{ conflict.context }}</div>
+                        <div><strong>Why it competes:</strong> {{ conflict.why_competes }}</div>
+                        {% if conflict.behavioral_impact %}
+                        <div><strong>User Impact:</strong> {{ conflict.behavioral_impact }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if conflict.severity_score %}
+                <div class="severity-meter">
+                    <div class="severity-label">Severity</div>
+                    <div class="severity-bar">
+                        <div class="severity-fill high-severity" data-width="{{ conflict.severity_score * 10 }}"></div>
+                    </div>
+                    <div class="severity-score">{{ conflict.severity_score }}/10</div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- MEDIUM Priority -->
+        {% if data.medium_priority_conflicts %}
+        <div class="priority-section mb-4">
+            <div class="priority-header priority-medium">
+                <div class="priority-indicator">
+                    <div class="priority-dot medium-dot"></div>
+                    <h3>MEDIUM Priority</h3>
+                </div>
+                <div class="priority-count">{{ data.medium_priority_conflicts|length }} Issues</div>
+            </div>
+            
+            {% for conflict in data.medium_priority_conflicts %}
+            <div class="conflict-card medium-priority">
+                <div class="conflict-main">
+                    <div class="conflict-element">
+                        <div class="element-type">{{ conflict.element_type }}</div>
+                        <div class="element-text">"{{ conflict.element_text }}"</div>
+                    </div>
+                    
+                    <div class="conflict-details">
+                        <div><strong>Context:</strong> {{ conflict.context }}</div>
+                        <div><strong>Why it competes:</strong> {{ conflict.why_competes }}</div>
+                        {% if conflict.behavioral_impact %}
+                        <div><strong>User Impact:</strong> {{ conflict.behavioral_impact }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if conflict.severity_score %}
+                <div class="severity-meter">
+                    <div class="severity-label">Severity</div>
+                    <div class="severity-bar">
+                        <div class="severity-fill medium-severity" data-width="{{ conflict.severity_score * 10 }}"></div>
+                    </div>
+                    <div class="severity-score">{{ conflict.severity_score }}/10</div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- LOW Priority -->
+        {% if data.low_priority_conflicts %}
+        <div class="priority-section mb-4">
+            <div class="priority-header priority-low">
+                <div class="priority-indicator">
+                    <div class="priority-dot low-dot"></div>
+                    <h3>LOW Priority</h3>
+                </div>
+                <div class="priority-count">{{ data.low_priority_conflicts|length }} Issues</div>
+            </div>
+            
+            {% for conflict in data.low_priority_conflicts %}
+            <div class="conflict-card low-priority">
+                <div class="conflict-main">
+                    <div class="conflict-element">
+                        <div class="element-type">{{ conflict.element_type }}</div>
+                        <div class="element-text">"{{ conflict.element_text }}"</div>
+                    </div>
+                    
+                    <div class="conflict-details">
+                        <div><strong>Context:</strong> {{ conflict.context }}</div>
+                        <div><strong>Why it competes:</strong> {{ conflict.why_competes }}</div>
+                        {% if conflict.behavioral_impact %}
+                        <div><strong>User Impact:</strong> {{ conflict.behavioral_impact }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if conflict.severity_score %}
+                <div class="severity-meter">
+                    <div class="severity-label">Severity</div>
+                    <div class="severity-bar">
+                        <div class="severity-fill low-severity" data-width="{{ conflict.severity_score * 10 }}"></div>
+                    </div>
+                    <div class="severity-score">{{ conflict.severity_score }}/10</div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Recommended Fixes -->
+    {% if data.recommendations %}
+    <div class="recommendations-section mb-5">
+        <div class="rec-header">
+            <div class="rec-icon">✅</div>
+            <h2>Recommended Fixes</h2>
+        </div>
+        
+        {% for rec in data.recommendations %}
+        <div class="rec-card rec-{{ rec.priority.lower() }}">
+            <div class="rec-number">{{ loop.index }}</div>
+            <div class="rec-content">
+                <div class="rec-action">{{ rec.action }}</div>
+                {% if rec.rationale %}
+                <div class="rec-rationale"><strong>Why:</strong> {{ rec.rationale }}</div>
+                {% endif %}
+                {% if rec.expected_impact %}
+                <div class="rec-impact"><strong>Expected Impact:</strong> {{ rec.expected_impact }}</div>
+                {% endif %}
+            </div>
+            <div class="rec-priority">{{ rec.priority }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Behavioral Science Insights -->
+    {% if data.behavioral_insights %}
+    <div class="insights-section mb-5">
+        <div class="insights-header">
+            <div class="insights-icon">🧠</div>
+            <h2>Behavioral Science Insights</h2>
+        </div>
+        
+        <div class="insights-grid">
+            {% for insight in data.behavioral_insights %}
+            <div class="insight-card {% if insight.applies %}insight-warning{% else %}insight-success{% endif %}">
+                <div class="insight-header">
+                    <div class="insight-status">
+                        {% if insight.applies %}
+                            ⚠️
+                        {% else %}
+                            ✅
+                        {% endif %}
+                    </div>
+                    <h4>{{ insight.insight }}</h4>
+                </div>
+                
+                <div class="insight-description">{{ insight.description }}</div>
+                
+                {% if insight.applies and insight.recommendation %}
+                <div class="insight-recommendation">
+                    <strong>Fix:</strong> {{ insight.recommendation }}
+                </div>
+                {% endif %}
+                
+                {% if insight.impact %}
+                <div class="insight-impact impact-{{ insight.impact }}">
+                    {{ insight.impact.upper() }} IMPACT
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- CTAs and Summary -->
+    <div class="row g-4">
+        <!-- Image Display -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0 text-white">
+                        <i class="fas fa-image me-2"></i>
+                        {{ data.filename or 'Analyzed Design' }}
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if data.image_data %}
+                    <div class="text-center">
+                        <img src="data:image/jpeg;base64,{{ data.image_data }}" 
+                             alt="Analysis Image" 
+                             class="w-100 h-auto">
+                    </div>
+                    {% else %}
+                    <div class="no-image-placeholder">
+                        <i class="fas fa-globe fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">URL Analysis - Screenshot processed</p>
+                        {% if data.source_url %}
+                        <a href="{{ data.source_url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-external-link-alt me-1"></i>
+                            Visit Page
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0 text-white">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Analysis Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <div class="summary-number">{{ data.total_ctas }}</div>
+                            <div class="summary-label">Total CTAs</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-number conflict-color">{{ data.total_conflicts }}</div>
+                            <div class="summary-label">Conflicts</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-number">{{ data.ctas | selectattr('goal_role', 'equalto', 'primary') | list | length }}</div>
+                            <div class="summary-label">Primary CTAs</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-number risk-{{ data.conflict_level }}">{{ data.conflict_level.upper() }}</div>
+                            <div class="summary-label">Risk Level</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTAs List -->
+            {% if data.ctas %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0 text-white">
+                        <i class="fas fa-bullseye me-2"></i>
+                        All CTAs ({{ data.ctas|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="ctas-list">
+                        {% for cta in data.ctas %}
+                        <div class="cta-item role-{{ cta.goal_role }}">
+                            <div class="cta-text">"{{ cta.extracted_text }}"</div>
+                            <div class="cta-details">
+                                <div class="cta-score score-{{ 'high' if cta.score >= 70 else 'medium' if cta.score >= 40 else 'low' }}">
+                                    {{ cta.score }}%
+                                </div>
+                                <div class="cta-role">{{ cta.goal_role.upper() }}</div>
+                            </div>
+                            <div class="cta-progress">
+                                <div class="progress-fill score-{{ 'high' if cta.score >= 70 else 'medium' if cta.score >= 40 else 'low' }}" 
+                                     data-width="{{ cta.score }}"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Color Palette Variables */
+:root {
+    --color-black: #000000;
+    --color-gray: #7C8BA5;
+    --color-white: #FFFFFF;
+    --color-blue: #1482FF;
+    --color-orange: #FFA027;
+    
+    /* Extended colors */
+    --color-blue-light: #59c2ff;
+    --color-blue-dark: #0037ff;
+    --color-orange-light: #ff832c;
+    --color-orange-dark: #ff6622;
+}
+
+/* Base Styles */
+.fade-in {
+    animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header */
+.results-header {
+    background: var(--color-white);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.results-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-black);
+    margin: 0;
+}
+
+.results-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    color: var(--color-gray);
+    font-size: 0.95rem;
+    margin-top: 1rem;
+}
+
+.meta-divider {
+    opacity: 0.5;
+    margin: 0 0.25rem;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+/* Goal Card */
+.goal-card {
+    background: var(--color-blue);
+    color: var(--color-white);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(20, 130, 255, 0.2);
+}
+
+.goal-header {
+    background: rgba(255,255,255,0.1);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.goal-content {
+    padding: 1.5rem;
+}
+
+.goal-content p {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* Competing Prompts Section */
+.competing-section {
+    background: linear-gradient(135deg, #fff5f5, #fef2f2);
+    border: 2px solid #fecaca;
+    border-radius: 20px;
+    padding: 2rem;
+}
+
+.competing-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.competing-icon {
+    font-size: 3rem;
+}
+
+.competing-header h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-black);
+    margin: 0;
+}
+
+.competing-header p {
+    color: var(--color-gray);
+    margin: 0.5rem 0 0 0;
+}
+
+/* Priority Sections */
+.priority-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+.priority-header.priority-high {
+    background: var(--color-black);
+    color: var(--color-white);
+}
+
+.priority-header.priority-medium {
+    background: var(--color-orange);
+    color: var(--color-black);
+}
+
+.priority-header.priority-low {
+    background: var(--color-blue);
+    color: var(--color-white);
+}
+
+.priority-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.priority-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+}
+
+.high-dot { background: #ef4444; }
+.medium-dot { background: var(--color-orange); }
+.low-dot { background: var(--color-blue); }
+
+.priority-header h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.priority-count {
+    font-size: 0.9rem;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+/* Conflict Cards */
+.conflict-card {
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--color-white);
+}
+
+.conflict-card.high-priority {
+    background: var(--color-black);
+}
+
+.conflict-card.medium-priority {
+    background: var(--color-orange);
+    color: var(--color-black);
+}
+
+.conflict-card.low-priority {
+    background: var(--color-blue);
+}
+
+.conflict-element {
+    margin-bottom: 1rem;
+}
+
+.element-type {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    opacity: 0.8;
+    letter-spacing: 0.5px;
+}
+
+.element-text {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-top: 0.25rem;
+}
+
+.conflict-details {
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.conflict-details > div {
+    margin-bottom: 0.5rem;
+}
+
+.conflict-details strong {
+    opacity: 0.9;
+}
+
+/* Severity Meter */
+.severity-meter {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255,255,255,0.2);
+}
+
+.severity-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    opacity: 0.8;
+    flex-shrink: 0;
+}
+
+.severity-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.severity-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease-out;
+    width: 0%;
+}
+
+.severity-fill.high-severity { background: rgba(255,255,255,0.9); }
+.severity-fill.medium-severity { background: rgba(0,0,0,0.3); }
+.severity-fill.low-severity { background: rgba(255,255,255,0.9); }
+
+.severity-score {
+    font-size: 0.9rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+/* Recommendations Section */
+.recommendations-section {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border: 2px solid #86efac;
+    border-radius: 20px;
+    padding: 2rem;
+}
+
+.rec-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.rec-icon {
+    font-size: 3rem;
+}
+
+.rec-header h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-black);
+    margin: 0;
+}
+
+.rec-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--color-white);
+}
+
+.rec-card.rec-high {
+    background: var(--color-black);
+}
+
+.rec-card.rec-medium {
+    background: var(--color-orange);
+    color: var(--color-black);
+}
+
+.rec-card.rec-low {
+    background: var(--color-blue);
+}
+
+.rec-number {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+}
+
+.rec-content {
+    flex: 1;
+}
+
+.rec-action {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.rec-rationale,
+.rec-impact {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.rec-priority {
+    flex-shrink: 0;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(255,255,255,0.2);
+    margin-top: 0.25rem;
+}
+
+/* Behavioral Insights */
+.insights-section {
+    background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+    border: 2px solid #c084fc;
+    border-radius: 20px;
+    padding: 2rem;
+}
+
+.insights-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.insights-icon {
+    font-size: 3rem;
+}
+
+.insights-header h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-black);
+    margin: 0;
+}
+
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.insight-card {
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+.insight-card:hover {
+    transform: translateY(-2px);
+}
+
+.insight-card.insight-warning {
+    background: var(--color-orange);
+    color: var(--color-black);
+}
+
+.insight-card.insight-success {
+    background: #22c55e;
+    color: var(--color-white);
+    opacity: 0.8;
+}
+
+.insight-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.insight-status {
+    font-size: 1.5rem;
+}
+
+.insight-header h4 {
+    font-weight: 700;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.insight-description {
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.insight-recommendation {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.insight-impact {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(255,255,255,0.2);
+    color: inherit;
+    display: inline-block;
+}
+
+/* Summary Stats */
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.summary-item {
+    text-align: center;
+    padding: 1rem;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+}
+
+.summary-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-light);
+    margin-bottom: 0.5rem;
+}
+
+.summary-label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.conflict-color { color: #ef4444 !important; }
+.risk-critical { color: #dc2626 !important; }
+.risk-high { color: #f59e0b !important; }
+.risk-medium { color: #3b82f6 !important; }
+.risk-low { color: #10b981 !important; }
+
+/* CTAs List */
+.ctas-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.cta-item {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.cta-text {
+    font-weight: 600;
+    color: var(--text-light);
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.cta-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.cta-score {
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+}
+
+.score-high { 
+    background: #22c55e; 
+    color: white; 
+}
+.score-medium { 
+    background: #f59e0b; 
+    color: white; 
+}
+.score-low { 
+    background: #ef4444; 
+    color: white; 
+}
+
+.cta-role {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+.cta-progress {
+    height: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease-out;
+    width: 0%;
+}
+
+.progress-fill.score-high { background: #22c55e; }
+.progress-fill.score-medium { background: #f59e0b; }
+.progress-fill.score-low { background: #ef4444; }
+
+/* No Image Placeholder */
+.no-image-placeholder {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .results-header {
+        padding: 1.5rem;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .results-title {
+        font-size: 1.75rem;
+        text-align: center;
+    }
+    
+    .results-meta {
+        justify-content: center;
+    }
+    
+    .competing-header,
+    .rec-header,
+    .insights-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.75rem;
+    }
+    
+    .priority-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .insights-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .rec-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate severity bars
+    setTimeout(() => {
+        document.querySelectorAll('.severity-fill').forEach(bar => {
+            const width = bar.getAttribute('data-width') + '%';
+            bar.style.width = width;
+        });
+        
+        // Animate progress bars
+        document.querySelectorAll('.progress-fill').forEach(bar => {
+            const width = bar.getAttribute('data-width') + '%';
+            bar.style.width = width;
+        });
+    }, 500);
+    
+    // Add click-to-copy functionality
+    document.querySelectorAll('.element-text').forEach(text => {
+        text.style.cursor = 'pointer';
+        text.title = 'Click to copy';
+        
+        text.addEventListener('click', function() {
+            const textContent = this.textContent.replace(/['"]/g, '');
+            navigator.clipboard.writeText(textContent).then(() => {
+                const original = this.innerHTML;
+                this.innerHTML = '✅ Copied!';
+                this.style.color = '#22c55e';
+                
+                setTimeout(() => {
+                    this.innerHTML = original;
+                    this.style.color = '';
+                }, 2000);
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

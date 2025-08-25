@@ -162,14 +162,46 @@
                              alt="Analysis Image" 
                              class="w-100 h-auto">
                         {% else %}
-                        <div class="no-image-placeholder">
-                            <i class="fas fa-globe fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">URL Analysis - Screenshot not available</p>
-                            {% if data.source_url %}
-                            <a href="{{ data.source_url }}" target="_blank" class="btn btn-outline-primary btn-sm">
-                                <i class="fas fa-external-link-alt me-1"></i>
-                                Visit Page
-                            </a>
+                        <div class="url-analysis-display">
+                            <div class="url-header mb-3">
+                                <i class="fas fa-globe fa-3x text-primary mb-3"></i>
+                                <h4 class="text-white mb-2">Webpage Analysis</h4>
+                                {% if data.source_url %}
+                                <p class="text-muted mb-3">{{ data.source_url }}</p>
+                                <a href="{{ data.source_url }}" target="_blank" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-external-link-alt me-2"></i>
+                                    Visit Analyzed Page
+                                </a>
+                                {% endif %}
+                            </div>
+                            
+                            {% if data.meta and data.meta.analysis_type %}
+                            <div class="analysis-info">
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <div class="info-card">
+                                            <div class="info-icon text-success">
+                                                <i class="fas fa-code"></i>
+                                            </div>
+                                            <div class="info-content">
+                                                <div class="info-label">Analysis Method</div>
+                                                <div class="info-value">{{ data.meta.analysis_type|title }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="info-card">
+                                            <div class="info-icon text-info">
+                                                <i class="fas fa-search"></i>
+                                            </div>
+                                            <div class="info-content">
+                                                <div class="info-label">Elements Scanned</div>
+                                                <div class="info-value">{{ data.meta.total_ctas_found or data.total_ctas }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             {% endif %}
                         </div>
                         {% endif %}
@@ -213,13 +245,20 @@
                         <div class="cta-list" style="max-height: 400px; overflow-y: auto;">
                             {% for cta in data.ctas %}
                             <div class="cta-item p-3 mb-3 rounded border cta-role-{{ cta.goal_role }}" 
-                                 style="border-color: var(--dark-surface-light) !important; background: rgba(30, 41, 59, 0.5);">
+                                 style="border-color: var(--dark-surface-light) !important; background: rgba(30, 41, 59, 0.5); color: var(--text-light);">
                                 
                                 <div class="d-flex justify-content-between items-start mb-2">
                                     <div class="cta-info">
                                         <h6 class="mb-0 fw-semibold">{{ cta.extracted_text }}</h6>
                                         <div class="cta-meta">
-                                            <small class="text-muted">{{ cta.element_type|title }}</small>
+                                            <small style="color: var(--text-muted);">{{ cta.element_type|title }}</small>
+                                            {% if cta.html_context %}
+                                            <div class="cta-html-context mt-1">
+                                                <small style="color: var(--text-muted); font-family: monospace; font-size: 0.75rem;">
+                                                    {{ cta.html_context[:50] }}{% if cta.html_context|length > 50 %}...{% endif %}
+                                                </small>
+                                            </div>
+                                            {% endif %}
                                         </div>
                                     </div>
                                     <span class="badge fs-6 fw-bold cta-score-{{ 'high' if cta.score >= 70 else 'medium' if cta.score >= 40 else 'low' }}">
@@ -956,7 +995,65 @@
     background-color: #ef4444;
 }
 
-/* No Image Placeholder */
+/* URL Analysis Display */
+.url-analysis-display {
+    padding: 3rem 2rem;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(20, 40, 255, 0.1), rgba(0, 115, 255, 0.1));
+    border: 2px solid rgba(20, 40, 255, 0.3);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.url-header h4 {
+    color: var(--text-light);
+    font-weight: 700;
+    margin: 0;
+}
+
+.url-header .text-primary {
+    color: var(--primary-color) !important;
+}
+
+.analysis-info {
+    margin-top: 2rem;
+}
+
+.info-card {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid var(--dark-surface-light);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.info-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.info-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.info-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.info-value {
+    color: var(--text-light);
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* No Image Placeholder (fallback) */
 .no-image-placeholder {
     padding: 4rem 2rem;
     text-align: center;

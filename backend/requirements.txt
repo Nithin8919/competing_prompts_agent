@@ -1,3 +1,4 @@
+# Fixed requirements.txt with URL analysis support
 Flask==2.3.3
 Flask-CORS==4.0.0
 torch==2.0.1
@@ -13,4 +14,11 @@ easyocr==1.7.0
 openai>=1.0.0
 httpx>=0.25.0
 timm==1.0.19
-beautifulsoup4>=4.13.0
+
+# URL Analysis Dependencies
+selenium==4.15.0
+webdriver-manager==4.0.1
+
+# Optional: For better web scraping
+beautifulsoup4==4.12.2
+lxml==4.9.3
