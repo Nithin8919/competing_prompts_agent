@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-navy-900;
+  }
+  
+  .btn-secondary {
+    @apply bg-navy-700 hover:bg-navy-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 border border-navy-600 focus:outline-none focus:ring-2 focus:ring-navy-500 focus:ring-offset-2 focus:ring-offset-navy-900;
+  }
+  
+  .card {
+    @apply bg-navy-800 rounded-xl p-6 shadow-lg border border-navy-700;
+  }
+  
+  .upload-zone {
+    @apply border-2 border-dashed border-navy-600 rounded-xl p-8 text-center transition-colors duration-200 hover:border-primary-500 hover:bg-navy-800/50;
+  }
+  
+  .upload-zone.dragover {
+    @apply border-primary-500 bg-primary-500/10;
+  }
+}
