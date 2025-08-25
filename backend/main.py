@@ -1,10 +1,15 @@
 # main.py - Robust CTA analyzer with multiple URL capture methods
-from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, send_file
 from flask_cors import CORS
 import os, time, base64, requests
 from io import BytesIO
 from PIL import Image
 from werkzeug.utils import secure_filename
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib import colors
 
 # Import our robust analyzer (save the previous artifact as robust_analyzer.py)
 try:
@@ -373,6 +378,115 @@ def debug_analyzer():
     }
     
     return jsonify(debug_info)
+
+@app.route('/download-pdf', methods=['POST'])
+def download_pdf():
+    """Generate and download analysis results as PDF"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+            
+        # Create PDF in memory
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        story = []
+        
+        # Get styles
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            spaceAfter=30,
+            textColor=colors.darkblue
+        )
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=14,
+            spaceAfter=20,
+            textColor=colors.darkblue
+        )
+        
+        # Title
+        story.append(Paragraph("CTA Analysis Report", title_style))
+        story.append(Spacer(1, 20))
+        
+        # Goal
+        story.append(Paragraph("Your Goal", heading_style))
+        story.append(Paragraph(data.get('desired_behavior', 'N/A'), styles['Normal']))
+        story.append(Spacer(1, 20))
+        
+        # Summary
+        story.append(Paragraph("Analysis Summary", heading_style))
+        summary_data = [
+            ['Total CTAs Found', str(data.get('total_ctas', 0))],
+            ['Total Conflicts', str(data.get('total_conflicts', 0))],
+            ['Conflict Level', data.get('conflict_level', 'N/A')],
+            ['Processing Time', f"{data.get('processing_time', 0)}s"]
+        ]
+        if data.get('source_url'):
+            summary_data.append(['Source URL', data.get('source_url')])
+        
+        summary_table = Table(summary_data, colWidths=[2*inch, 3*inch])
+        summary_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        story.append(summary_table)
+        story.append(Spacer(1, 20))
+        
+        # Conflicts
+        if data.get('conflicts'):
+            story.append(Paragraph("Competing Prompts Found", heading_style))
+            for conflict in data.get('conflicts', []):
+                conflict_text = f"<b>{conflict.get('priority', 'N/A')} Priority - {conflict.get('element_type', 'N/A')}</b><br/>"
+                conflict_text += f"Text: \"{conflict.get('element_text', 'N/A')}\"<br/>"
+                conflict_text += f"Context: {conflict.get('context', 'N/A')}<br/>"
+                conflict_text += f"Why it competes: {conflict.get('why_competes', 'N/A')}<br/>"
+                if conflict.get('behavioral_impact'):
+                    conflict_text += f"User Impact: {conflict.get('behavioral_impact', 'N/A')}<br/>"
+                conflict_text += f"Severity Score: {conflict.get('severity_score', 'N/A')}/10"
+                story.append(Paragraph(conflict_text, styles['Normal']))
+                story.append(Spacer(1, 10))
+            story.append(Spacer(1, 20))
+        
+        # Recommendations
+        if data.get('recommendations'):
+            story.append(Paragraph("Recommendations", heading_style))
+            for rec in data.get('recommendations', []):
+                rec_text = f"<b>{rec.get('priority', 'N/A')} Priority</b><br/>"
+                rec_text += f"Action: {rec.get('action', 'N/A')}<br/>"
+                rec_text += f"Rationale: {rec.get('rationale', 'N/A')}<br/>"
+                rec_text += f"Expected Impact: {rec.get('expected_impact', 'N/A')}"
+                story.append(Paragraph(rec_text, styles['Normal']))
+                story.append(Spacer(1, 10))
+            story.append(Spacer(1, 20))
+        
+        # Build PDF
+        doc.build(story)
+        buffer.seek(0)
+        
+        # Generate filename
+        filename = f"cta-analysis-{int(time.time())}.pdf"
+        
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        print(f"❌ PDF generation failed: {e}")
+        return jsonify({"error": f"PDF generation failed: {str(e)}"}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))

@@ -22,3 +22,6 @@ webdriver-manager==4.0.1
 # Optional: For better web scraping
 beautifulsoup4==4.12.2
 lxml==4.9.3
+
+# PDF Generation
+reportlab==4.0.4
