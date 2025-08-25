@@ -13,3 +13,4 @@ easyocr==1.7.0
 openai>=1.0.0
 httpx>=0.25.0
 timm==1.0.19
+beautifulsoup4>=4.13.0
