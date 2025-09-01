@@ -802,14 +802,18 @@ Respond with STRICT JSON only."""},
         conflicts = []
         
         # 1. CHOICE OVERLOAD - Multiple high-scoring CTAs
-        high_score_ctas = [c for c in ctas if c["score"] >= 60]
+        high_score_ctas = [c for c in ctas if int(c["score"]) >= 60]
         if len(high_score_ctas) >= 3:
+            cta_texts = [f'"{c["extracted_text"]}"' for c in high_score_ctas[:3]]
             conflicts.append({
-                "issue": f"Choice Overload: {len(high_score_ctas)} high-scoring CTAs competing",
-                "severity": min(10, 6 + len(high_score_ctas)),  # 6-10 scale
-                "fix": f"Reduce to 1-2 primary CTAs, demote {len(high_score_ctas)-2} to supporting elements",
-                "affected_ctas": [c["extracted_text"] for c in high_score_ctas],
-                "type": "choice_overload"
+                "priority": "HIGH",
+                "element_type": "Multiple",
+                "element_text": f"{len(high_score_ctas)} competing CTAs",
+                "context": f"Multiple high-prominence elements: {', '.join(cta_texts)}",
+                "why_competes": f"Visual competition between: {', '.join(cta_texts)}",
+                "behavioral_impact": "Choice overload reduces conversion rates - users can't decide which to click",
+                "severity_score": min(10, len(high_score_ctas)),
+                "competing_ctas": cta_texts
             })
         
         # 2. SEMANTIC COMPETITION - Similar action words
@@ -826,26 +830,34 @@ Respond with STRICT JSON only."""},
                 action_groups.setdefault('viewing', []).append(cta)
         
         for action_type, group_ctas in action_groups.items():
-            if len(group_ctas) >= 2 and any(c["score"] >= 50 for c in group_ctas):
+            if len(group_ctas) >= 2 and any(int(c["score"]) >= 50 for c in group_ctas):
+                cta_texts = [f'"{c["extracted_text"]}"' for c in group_ctas]
                 conflicts.append({
-                    "issue": f"Semantic Conflict: {len(group_ctas)} CTAs with similar '{action_type}' actions",
-                    "severity": 6 + len(group_ctas),
-                    "fix": f"Choose one primary '{action_type}' CTA, remove or restyle others",
-                    "affected_ctas": [c["extracted_text"] for c in group_ctas],
-                    "type": "semantic_conflict"
+                    "priority": "MEDIUM",
+                    "element_type": action_type,
+                    "element_text": f"{len(group_ctas)} CTAs with similar actions",
+                    "context": f"Multiple '{action_type}' CTAs: {', '.join(cta_texts)}",
+                    "why_competes": f"Similar action verbs confuse users between: {', '.join(cta_texts)}",
+                    "behavioral_impact": "Users may click wrong CTA or hesitate between similar options",
+                    "severity_score": 6 + len(group_ctas),
+                    "competing_ctas": cta_texts
                 })
         
         # 3. ROLE ASSIGNMENT CONFLICT - All neutral is wrong
-        primary_ctas = [c for c in ctas if c.get("role") == "primary"]
-        neutral_high_score = [c for c in ctas if c.get("role") == "neutral" and c["score"] >= 70]
+        primary_ctas = [c for c in ctas if c.get("goal_role") == "primary"]
+        neutral_high_score = [c for c in ctas if c.get("goal_role") == "neutral" and int(c["score"]) >= 70]
         
         if len(primary_ctas) == 0 and len(neutral_high_score) >= 1:
+            cta_texts = [f'"{c["extracted_text"]}"' for c in neutral_high_score[:2]]
             conflicts.append({
-                "issue": "Missing Primary CTA: High-scoring CTAs marked as neutral",
-                "severity": 8,
-                "fix": f"Designate '{neutral_high_score[0]['extracted_text']}' as primary CTA",
-                "affected_ctas": [c["extracted_text"] for c in neutral_high_score[:2]],
-                "type": "role_assignment"
+                "priority": "HIGH",
+                "element_type": "Missing Primary",
+                "element_text": f"High-scoring CTA not designated as primary",
+                "context": f"No clear primary action identified. High-scoring CTAs: {', '.join(cta_texts)}",
+                "why_competes": f"High-scoring CTAs should be designated as primary: {', '.join(cta_texts)}",
+                "behavioral_impact": "Users unclear about main desired action - no clear primary CTA",
+                "severity_score": 8,
+                "competing_ctas": cta_texts
             })
         
         return conflicts
@@ -854,26 +866,26 @@ Respond with STRICT JSON only."""},
         """Fix role assignment based on scores and content"""
         
         # Sort by score
-        sorted_ctas = sorted(ctas, key=lambda x: x["score"], reverse=True)
+        sorted_ctas = sorted(ctas, key=lambda x: int(x["score"]), reverse=True)
         
         for i, cta in enumerate(sorted_ctas):
             text_lower = cta["extracted_text"].lower()
-            score = cta["score"]
+            score = int(cta["score"])
             
-            # Primary CTA rules
-            if (score >= 80 and i == 0) or any(word in text_lower for word in ['get started', 'start now', 'book now', 'sign up']):
-                cta["role"] = "primary"
+            # Primary CTA rules - use goal_role instead of role
+            if (score >= 70 and i == 0) or any(word in text_lower for word in ['get started', 'start now', 'book now', 'sign up', 'get', 'start']):
+                cta["goal_role"] = "primary"
             # Supporting CTA rules  
-            elif score >= 50 and any(word in text_lower for word in ['see how', 'learn more', 'watch demo']):
-                cta["role"] = "supporting"
+            elif score >= 50 and any(word in text_lower for word in ['see how', 'learn more', 'watch demo', 'see', 'learn', 'view', 'watch']):
+                cta["goal_role"] = "supporting"
             # Off-goal detection
             elif score >= 40 and any(word in text_lower for word in ['about', 'contact', 'privacy', 'terms']):
-                cta["role"] = "off-goal"
+                cta["goal_role"] = "off-goal"
             # High-scoring CTAs that compete with primary
             elif score >= 70:
-                cta["role"] = "competing"  # New role for conflicting CTAs
+                cta["goal_role"] = "competing"  # New role for conflicting CTAs
             else:
-                cta["role"] = "neutral"
+                cta["goal_role"] = "neutral"
         
         return sorted_ctas
 
