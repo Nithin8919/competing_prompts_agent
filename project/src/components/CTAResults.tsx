@@ -164,24 +164,114 @@ export const CTAResults: React.FC<CTAResultsProps> = ({ results, onNewAnalysis }
         </div>
       </div>
 
-      {/* Conflicts */}
+      {/* Competing Prompts - MAIN OUTPUT */}
       {conflicts.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4">Competing Prompts</h3>
-          <div className="space-y-4">
+        <div className="mb-12 bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Competing Prompts Analysis</h2>
+            <p className="text-lg text-gray-600 mb-4">
+              {conflicts.length} competing prompt{conflicts.length > 1 ? 's' : ''} detected that may impact conversions
+            </p>
+            <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 px-4 py-2 rounded-full">
+              <span className="text-blue-700 font-semibold">Total Conflicts:</span>
+              <span className="text-2xl font-bold text-blue-900">{conflicts.length}</span>
+            </div>
+          </div>
+          
+          <div className="space-y-6">
             {conflicts.map((conflict, index) => (
-              <div key={index} className="border-l-4 border-red-400 bg-red-50 p-4 rounded-r-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(conflict.priority)}`}>
-                    {conflict.priority} PRIORITY
-                  </span>
-                  <span className="text-sm font-medium text-gray-700">{conflict.element_type}</span>
-                  <span className="text-sm text-gray-600">Severity: {conflict.severity_score}/10</span>
+              <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-300">
+                {/* Conflict Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${getPriorityColor(conflict.priority)}`}>
+                      {conflict.priority} PRIORITY
+                    </span>
+                    <span className="text-sm font-medium text-gray-600 bg-white px-2 py-1 rounded border border-gray-200">
+                      {conflict.element_type}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700">Severity:</span>
+                    <div className="flex items-center gap-1">
+                      {[...Array(10)].map((_, i) => (
+                        <div
+                          key={i}
+                          className={`w-2 h-2 rounded-full ${
+                            i < conflict.severity_score ? 'bg-blue-500' : 'bg-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm font-bold text-blue-600">{conflict.severity_score}/10</span>
+                  </div>
                 </div>
-                <h4 className="font-medium text-gray-900 mb-1">"{conflict.element_text}"</h4>
-                <p className="text-sm text-gray-700 mb-2">{conflict.context}</p>
-                <p className="text-sm text-gray-600 mb-1"><strong>Why it competes:</strong> {conflict.why_competes}</p>
-                <p className="text-sm text-gray-600"><strong>User impact:</strong> {conflict.behavioral_impact}</p>
+                
+                {/* Conflict Title */}
+                <h3 className="text-xl font-bold text-gray-900 mb-3 border-b border-gray-200 pb-2">
+                  {conflict.element_text}
+                </h3>
+                
+                {/* Conflict Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                    <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <span className="text-blue-600">🔍</span>
+                      Why It Competes
+                    </h4>
+                    <p className="text-gray-700 leading-relaxed mb-3">{conflict.why_competes}</p>
+                    
+                    {/* Competing CTAs List */}
+                    {conflict.competing_ctas && conflict.competing_ctas.length > 0 && (
+                      <div className="mt-4">
+                        <h5 className="font-medium text-gray-800 mb-2">Conflicting CTAs:</h5>
+                        <div className="space-y-2">
+                          {conflict.competing_ctas.map((cta, ctaIndex) => (
+                            <div key={ctaIndex} className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-md p-2">
+                              <span className="text-red-600 font-medium text-sm">•</span>
+                              <span className="text-red-800 font-medium">{cta}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                    <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <span className="text-green-600">👤</span>
+                      User Impact
+                    </h4>
+                    <p className="text-gray-700 leading-relaxed">{conflict.behavioral_impact}</p>
+                  </div>
+                </div>
+                
+                {/* Context Information */}
+                {conflict.context && (
+                  <div className="mt-4 bg-white border border-gray-200 p-4 rounded-lg">
+                    <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <span className="text-gray-600">📋</span>
+                      Context
+                    </h4>
+                    <p className="text-gray-700">{conflict.context}</p>
+                  </div>
+                )}
+                
+                {/* Action Required */}
+                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                    <span className="text-blue-600">⚡</span>
+                    Action Required
+                  </h4>
+                  <p className="text-blue-800">
+                    {conflict.priority === 'HIGH' 
+                      ? 'Fix this immediately to prevent conversion loss'
+                      : conflict.priority === 'MEDIUM'
+                      ? 'Address this soon to improve user experience'
+                      : 'Consider addressing this for optimization'
+                    }
+                  </p>
+                </div>
               </div>
             ))}
           </div>

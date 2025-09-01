@@ -46,6 +46,7 @@ export interface Conflict {
   why_competes: string;
   behavioral_impact: string;
   severity_score: number;
+  competing_ctas?: string[];
 }
 
 export interface BehavioralInsight {
