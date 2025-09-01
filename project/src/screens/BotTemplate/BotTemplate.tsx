@@ -27,36 +27,37 @@ export const BotTemplate = (): JSX.Element => {
           <div className="flex items-start justify-between">
             <div className="flex-1 max-w-[564px]">
               {/* Main Heading */}
-              <div className="mb-8">
-                <h1 className="text-5xl font-bold text-black mb-2">
+              <div className="mb-10">
+                <h1 className="text-5xl font-bold text-black mb-3 leading-tight">
                   Start your journey with
                 </h1>
-                <h1 className="text-5xl font-bold text-[#1482ff] mb-6">
+                <h1 className="text-5xl font-bold text-[#1482ff] mb-6 leading-tight">
                   Chatbot
                 </h1>
-                <p className="[font-family:'Inter',Helvetica] font-normal text-[#252525] text-lg tracking-[0] leading-[26px]">
+                <p className="[font-family:'Inter',Helvetica] font-normal text-[#252525] text-lg tracking-[0] leading-[28px] mb-10">
                   An AI-powered assistant designed to engage, support, and
                   convert your audience.
                 </p>
               </div>
 
               {/* CTA Buttons */}
-              <div className="flex items-center gap-4">
-                <Button className="h-auto inline-flex items-center justify-center gap-2.5 p-2.5 rounded bg-[linear-gradient(90deg,rgba(9,194,255,1)_0%,rgba(0,115,255,1)_100%)] hover:opacity-90">
-                  <span className="[font-family:'Inter',Helvetica] font-medium text-white text-lg tracking-[0] leading-[normal]">
-                    Start for Free
-                  </span>
+              <div className="flex items-center gap-5">
+                <Button 
+                  variant="orange"
+                  className="h-auto inline-flex items-center justify-center px-6 py-3 rounded-lg text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  Start for Free
                 </Button>
 
                 <Button
                   variant="ghost"
-                  className="h-auto inline-flex items-center justify-center gap-2.5 p-2.5 rounded hover:bg-gray-50"
+                  className="h-auto inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors duration-200"
                 >
                   <span className="[font-family:'Inter',Helvetica] font-medium text-[#363636] text-lg tracking-[0] leading-[normal]">
                     Book Demo
                   </span>
                   <svg
-                    className="w-6 h-6"
+                    className="w-5 h-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

@@ -1,5 +1,6 @@
 import React from 'react';
-import { CTAAnalysisResponse, CTA, Conflict, Recommendation } from '../services/api';
+import { Button } from './ui/button';
+import { CTAAnalysisResponse } from '../services/api';
 
 interface CTAResultsProps {
   results: CTAAnalysisResponse;
@@ -48,12 +49,13 @@ export const CTAResults: React.FC<CTAResultsProps> = ({ results, onNewAnalysis }
       <div className="w-full max-w-6xl mx-auto p-8 bg-white rounded-lg shadow-lg">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-red-600 mb-4">No Results Received</h2>
-          <button
+          <Button
+            variant="orange"
             onClick={onNewAnalysis}
-            className="text-blue-600 hover:text-blue-800 font-medium"
+            className="font-medium"
           >
             ← Try Again
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -77,12 +79,13 @@ export const CTAResults: React.FC<CTAResultsProps> = ({ results, onNewAnalysis }
             {meta?.processing_time || 'N/A'} PROCESSING TIME
           </span>
         </div>
-        <button
+        <Button
+          variant="orange"
           onClick={onNewAnalysis}
-          className="text-blue-600 hover:text-blue-800 font-medium"
+          className="font-medium"
         >
           ← Analyze Another Design
-        </button>
+        </Button>
       </div>
 
       {/* Summary Cards */}

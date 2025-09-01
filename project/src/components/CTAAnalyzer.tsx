@@ -190,8 +190,9 @@ export const CTAAnalyzer: React.FC<CTAAnalyzerProps> = ({ onAnalysisComplete }) 
         <div className="text-center">
           <Button
             type="submit"
+            variant="orange"
             disabled={isLoading}
-            className="bg-gradient-to-r from-[#09c2ff] to-[#0073ff] text-white px-8 py-3 rounded-lg font-medium text-lg hover:opacity-90 disabled:opacity-50"
+            className="px-8 py-3 rounded-lg font-medium text-lg disabled:opacity-50"
           >
             {isLoading ? (
               <div className="flex items-center gap-2">

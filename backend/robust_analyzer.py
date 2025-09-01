@@ -760,6 +760,8 @@ Respond with STRICT JSON only."""},
         conflicts = self._detect_conflicts_enhanced(final_ctas)  # NEW LINE
         conflict_level = self._calculate_conflict_level(conflicts)  # NEW LINE
 
+        # Get competing prompts data for fallback insights/recommendations
+        comp_data = parsed.get("competing_prompts", {})
         insights = comp_data.get("behavioral_insights", [])
         if not insights:
             insights = self._generate_insights(final_ctas, conflicts)
