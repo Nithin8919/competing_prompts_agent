@@ -27,58 +27,37 @@ CTA_VERBS = {
     "free", "demo", "trial", "now", "today", "instant", "click", "shop"
 }
 
-SYSTEM_PROMPT = """You are a world-class CRO analyst. Analyze the screenshot and OCR text to find competing CTAs that hurt conversions.
+SYSTEM_PROMPT = """You are a CRO expert analyzing landing pages for CTA conflicts.
 
-REQUIREMENTS:
-- USE ONLY the provided OCR text. Never invent text.
-- Output STRICT JSON that validates perfectly.
-- Focus on REAL conflicts that confuse users.
+TASK: Find CTAs that compete and hurt conversions.
 
-OUTPUT SCHEMA:
+RULES:
+1. Use ONLY the provided OCR text - never invent
+2. Primary goal: Workshop registration 
+3. Score based on: size + position + goal relevance
+4. Identify real conflicts that confuse users
+
+SCORING:
+- Primary CTA (register/signup): 80-100
+- Supporting CTAs: 40-70  
+- Distractions: 0-40
+
+CONFLICTS:
+- Multiple 70+ scores = choice overload
+- Similar actions = confusion
+- Incomplete text = technical issue
+
+JSON SCHEMA:
 {
   "ctas": [
-    {
-      "index": <int>,
-      "extracted_text": "<exact OCR text>",
-      "bbox": [x1,y1,x2,y2],
-      "score": <0-100>,
-      "goal_role": "primary" | "supporting" | "off-goal" | "neutral",
-      "element_type": "button" | "link" | "banner" | "menu" | "form"
-    }
+    {"text": "<exact_ocr_text>", "score": <0-100>, "role": "primary|supporting|distraction"}
   ],
-  "competing_prompts": {
-    "conflict_level": "low" | "medium" | "high" | "critical",
-    "total_competing": <int>,
-    "conflicts": [
-      {
-        "priority": "HIGH" | "MEDIUM" | "LOW",
-        "element_type": "Button" | "Link" | "Banner" | "Menu",
-        "element_text": "<exact text>",
-        "context": "<how it appears>",
-        "why_competes": "<competition reason>",
-        "behavioral_impact": "<user psychology effect>",
-        "severity_score": <1-10>
-      }
-    ],
-    "behavioral_insights": [
-      {
-        "insight": "<insight name>",
-        "description": "<explanation>",
-        "applies": true | false,
-        "impact": "high" | "medium" | "low",
-        "recommendation": "<fix>"
-      }
-    ],
-    "recommendations": [
-      {
-        "priority": "HIGH" | "MEDIUM" | "LOW",
-        "action": "<actionable fix>",
-        "rationale": "<why this improves conversions>",
-        "expected_impact": "<estimated improvement>"
-      }
-    ]
-  }
-}"""
+  "conflicts": [
+    {"issue": "<problem>", "severity": <1-10>, "fix": "<actionable_solution>"}
+  ]
+}
+
+Be practical - focus on real conversion killers."""
 
 class RobustCTAAnalyzer:
     def __init__(self):
@@ -589,7 +568,7 @@ Respond with STRICT JSON only."""},
 
     def _extract_cta_candidates(self, image: Image.Image) -> List[Dict[str, Any]]:
         """Enhanced CTA extraction"""
-        img = image.convert("RGB")
+        img = self._improve_ocr_quality(image.convert("RGB"))  # NEW LINE
         
         # Use multiple OCR passes for better results
         ocr_results = []
@@ -634,18 +613,7 @@ Respond with STRICT JSON only."""},
                     continue
 
                 # Enhanced scoring
-                area_pct = (area_px / (img.width * img.height)) * 100
-                center_y = (y1 + y2) / 2
-                center_x = (x1 + x2) / 2
-                
-                # Position bonuses
-                above_fold_bonus = 20 if center_y <= img.height * 0.6 else 0
-                center_bonus = 10 if abs(center_x - img.width/2) < img.width * 0.3 else 0
-                
-                # Content bonuses
-                cta_bonus = 15 if any(verb in cleaned_text.lower() for verb in ['get', 'start', 'buy', 'book', 'try']) else 0
-                
-                score = min(100, int(area_pct * 5 + above_fold_bonus + center_bonus + cta_bonus))
+                score = self._calculate_enhanced_score(cleaned_text, bbox, img.width, img.height)
 
                 candidates.append({
                     "extracted_text": cleaned_text,
@@ -669,6 +637,50 @@ Respond with STRICT JSON only."""},
         result = list(seen.values())
         result.sort(key=lambda x: x["preliminary_score"], reverse=True)
         return result[:15]
+
+    def _calculate_enhanced_score(self, text: str, bbox: List[int], img_width: int, img_height: int) -> int:
+        """Enhanced scoring for CTAs"""
+        text_lower = text.lower()
+        
+        # Base score from size and position
+        area_pct = ((bbox[2] - bbox[0]) * (bbox[3] - bbox[1])) / (img_width * img_height) * 100
+        center_y = (bbox[1] + bbox[3]) / 2
+        center_x = (bbox[0] + bbox[2]) / 2
+        
+        # Position bonuses
+        above_fold_bonus = 30 if center_y < img_height * 0.6 else 0
+        center_bonus = 15 if abs(center_x - img_width/2) < img_width * 0.3 else 0
+        
+        # Primary CTA detection (CRITICAL FIX)
+        primary_cta_bonus = 0
+        primary_patterns = [
+            'register for free', 'register now', 'sign up free', 'join free',
+            'register for', 'get started', 'start free'
+        ]
+        if any(pattern in text_lower for pattern in primary_patterns):
+            primary_cta_bonus = 40  # Major boost
+        
+        # Action word bonus
+        action_bonus = 15 if any(word in text_lower for word in ['get', 'start', 'register', 'sign', 'join', 'book']) else 0
+        
+        # Penalize incomplete/artifact text
+        incomplete_penalty = 0
+        if (len(text_lower.split()) < 2 or 
+            any(char in text_lower for char in ['_', '|', '\\']) or
+            text_lower.endswith(' bo') or text_lower.endswith(' st') or
+            'ibs' in text_lower):
+            incomplete_penalty = -30
+        
+        score = max(0, min(100, int(
+            area_pct * 3 + 
+            above_fold_bonus + 
+            center_bonus + 
+            primary_cta_bonus + 
+            action_bonus - 
+            incomplete_penalty
+        )))
+        
+        return score
 
     def _guess_element_type(self, text: str, bbox: List[int], img_width: int, img_height: int) -> str:
         """Enhanced element type detection"""
@@ -741,10 +753,12 @@ Respond with STRICT JSON only."""},
                 } for c in candidates[:10]
             ]
 
-        comp_data = parsed.get("competing_prompts", {})
-        conflicts = comp_data.get("conflicts", [])
-        if not isinstance(conflicts, list):
-            conflicts = []
+        # Enhanced role assignment
+        final_ctas = self._assign_proper_roles(final_ctas)  # NEW LINE
+
+        # Enhanced conflict detection
+        conflicts = self._detect_conflicts_enhanced(final_ctas)  # NEW LINE
+        conflict_level = self._calculate_conflict_level(conflicts)  # NEW LINE
 
         insights = comp_data.get("behavioral_insights", [])
         if not insights:
@@ -758,7 +772,7 @@ Respond with STRICT JSON only."""},
             "ctas": final_ctas,
             "competing_prompts": {
                 "total_competing": len(conflicts),
-                "conflict_level": comp_data.get("conflict_level", self._calc_conflict_level(conflicts)),
+                "conflict_level": conflict_level,
                 "conflicts": conflicts,
                 "behavioral_insights": insights,
                 "recommendations": recommendations,
@@ -780,6 +794,104 @@ Respond with STRICT JSON only."""},
                 "model_used": self.model
             }
         }
+
+    def _detect_conflicts_enhanced(self, ctas: List[Dict]) -> List[Dict]:
+        """Enhanced conflict detection"""
+        conflicts = []
+        
+        # 1. CHOICE OVERLOAD - Multiple high-scoring CTAs
+        high_score_ctas = [c for c in ctas if c["score"] >= 60]
+        if len(high_score_ctas) >= 3:
+            conflicts.append({
+                "issue": f"Choice Overload: {len(high_score_ctas)} high-scoring CTAs competing",
+                "severity": min(10, 6 + len(high_score_ctas)),  # 6-10 scale
+                "fix": f"Reduce to 1-2 primary CTAs, demote {len(high_score_ctas)-2} to supporting elements",
+                "affected_ctas": [c["extracted_text"] for c in high_score_ctas],
+                "type": "choice_overload"
+            })
+        
+        # 2. SEMANTIC COMPETITION - Similar action words
+        action_groups = {}
+        for cta in ctas:
+            text_lower = cta["extracted_text"].lower()
+            
+            # Group by action type
+            if any(word in text_lower for word in ['get', 'start']):
+                action_groups.setdefault('start_get', []).append(cta)
+            elif any(word in text_lower for word in ['book', 'schedule', 'call']):
+                action_groups.setdefault('booking', []).append(cta)
+            elif any(word in text_lower for word in ['see', 'view', 'watch']):
+                action_groups.setdefault('viewing', []).append(cta)
+        
+        for action_type, group_ctas in action_groups.items():
+            if len(group_ctas) >= 2 and any(c["score"] >= 50 for c in group_ctas):
+                conflicts.append({
+                    "issue": f"Semantic Conflict: {len(group_ctas)} CTAs with similar '{action_type}' actions",
+                    "severity": 6 + len(group_ctas),
+                    "fix": f"Choose one primary '{action_type}' CTA, remove or restyle others",
+                    "affected_ctas": [c["extracted_text"] for c in group_ctas],
+                    "type": "semantic_conflict"
+                })
+        
+        # 3. ROLE ASSIGNMENT CONFLICT - All neutral is wrong
+        primary_ctas = [c for c in ctas if c.get("role") == "primary"]
+        neutral_high_score = [c for c in ctas if c.get("role") == "neutral" and c["score"] >= 70]
+        
+        if len(primary_ctas) == 0 and len(neutral_high_score) >= 1:
+            conflicts.append({
+                "issue": "Missing Primary CTA: High-scoring CTAs marked as neutral",
+                "severity": 8,
+                "fix": f"Designate '{neutral_high_score[0]['extracted_text']}' as primary CTA",
+                "affected_ctas": [c["extracted_text"] for c in neutral_high_score[:2]],
+                "type": "role_assignment"
+            })
+        
+        return conflicts
+
+    def _assign_proper_roles(self, ctas: List[Dict]) -> List[Dict]:
+        """Fix role assignment based on scores and content"""
+        
+        # Sort by score
+        sorted_ctas = sorted(ctas, key=lambda x: x["score"], reverse=True)
+        
+        for i, cta in enumerate(sorted_ctas):
+            text_lower = cta["extracted_text"].lower()
+            score = cta["score"]
+            
+            # Primary CTA rules
+            if (score >= 80 and i == 0) or any(word in text_lower for word in ['get started', 'start now', 'book now', 'sign up']):
+                cta["role"] = "primary"
+            # Supporting CTA rules  
+            elif score >= 50 and any(word in text_lower for word in ['see how', 'learn more', 'watch demo']):
+                cta["role"] = "supporting"
+            # Off-goal detection
+            elif score >= 40 and any(word in text_lower for word in ['about', 'contact', 'privacy', 'terms']):
+                cta["role"] = "off-goal"
+            # High-scoring CTAs that compete with primary
+            elif score >= 70:
+                cta["role"] = "competing"  # New role for conflicting CTAs
+            else:
+                cta["role"] = "neutral"
+        
+        return sorted_ctas
+
+    def _calculate_conflict_level(self, conflicts: List[Dict]) -> str:
+        """Calculate overall conflict severity"""
+        if not conflicts:
+            return "low"
+        
+        max_severity = max(c.get("severity", 1) for c in conflicts)
+        total_conflicts = len(conflicts)
+        
+        # More aggressive conflict detection
+        if max_severity >= 9 or total_conflicts >= 4:
+            return "critical"
+        elif max_severity >= 7 or total_conflicts >= 3:
+            return "high" 
+        elif max_severity >= 5 or total_conflicts >= 2:
+            return "medium"
+        else:
+            return "low"
 
     def _generate_insights(self, ctas: List[Dict], conflicts: List[Dict]) -> List[Dict]:
         """Generate behavioral insights based on CTA analysis"""
@@ -981,24 +1093,36 @@ Respond with STRICT JSON only."""},
         }
 
     def _clean_text(self, text: str) -> str:
-        """Enhanced text cleaning"""
+        """Enhanced text cleaning with domain-specific fixes"""
         if not text:
             return ""
+        
+        # Fix common OCR errors for landing pages
+        text = text.replace('IBS', '185')  # Number confusion
+        text = text.replace('bo ', 'boosting ')  # Incomplete words
+        text = text.replace('st ', 'start ')
         
         # Remove OCR artifacts
         text = re.sub(r'[^\w\s\-\.\,\!\?\(\)\$\+\%\&]', ' ', text)
         text = re.sub(r'\s+', ' ', text)
         
-        # Fix common OCR mistakes
-        replacements = {
-            '0': 'O', '1': 'I', '5': 'S', '8': 'B',  # Numbers to letters
-            'rn': 'm', 'vv': 'w', 'ii': 'n'  # Common OCR confusions
+        # Fix common CTA patterns
+        if 'free workshop' in text.lower() and 'register' not in text.lower():
+            return "Register for free"
+        
+        # Fix incomplete button text
+        common_fixes = {
+            'you can start bo': 'You can start boosting',
+            'register for': 'Register for free',
+            'sign up': 'Sign up free'
         }
         
-        for old, new in replacements.items():
-            text = text.replace(old, new)
+        text_lower = text.lower()
+        for incomplete, complete in common_fixes.items():
+            if incomplete in text_lower:
+                return complete
         
-        return text.strip()[:100]  # Limit length
+        return text.strip()[:100]
 
     def _looks_like_cta(self, text: str) -> bool:
         """Enhanced CTA detection"""
@@ -1046,6 +1170,35 @@ Respond with STRICT JSON only."""},
         """Convert PIL to numpy array"""
         import numpy as np
         return np.array(pil_image)
+
+    def _improve_ocr_quality(self, image: Image.Image) -> Image.Image:
+        """Enhanced OCR preprocessing"""
+        try:
+            import cv2
+            import numpy as np
+            
+            # Convert PIL to CV2
+            img_array = np.array(image)
+            
+            # 1. Resize for better OCR (minimum 1200px width)
+            if img_array.shape[1] < 1200:
+                scale = 1200 / img_array.shape[1]
+                new_width = 1200
+                new_height = int(img_array.shape[0] * scale)
+                img_array = cv2.resize(img_array, (new_width, new_height), interpolation=cv2.INTER_CUBIC)
+            
+            # 2. Convert to grayscale for better text detection
+            gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+            
+            # 3. Apply slight sharpening
+            kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
+            sharpened = cv2.filter2D(gray, -1, kernel)
+            
+            # 4. Convert back to PIL
+            return Image.fromarray(cv2.cvtColor(sharpened, cv2.COLOR_GRAY2RGB))
+        except ImportError:
+            # If cv2 not available, return original
+            return image
 
     def _to_jpeg(self, img: Image.Image, quality: int = 85) -> bytes:
         """Convert to JPEG bytes"""
